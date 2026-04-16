@@ -4,7 +4,7 @@ import feedparser
 from telegram import Bot
 from apscheduler.schedulers.background import BackgroundScheduler
 
-TOKEN = os.getenv("8625470192:AAGCLRkQzxgXJCrOdz9RQPXz6TMvlQz716I")
+TOKEN = "8625470192:AAGCLRkQzxgXJCrOdz9RQPXz6TMvlQz716I"
 CHANNEL = "@kuponbazz"
 
 bot = Bot(token=TOKEN)
