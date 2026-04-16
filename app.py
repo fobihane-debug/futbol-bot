@@ -10,7 +10,6 @@ CHANNEL = "@kuponbazz"
 bot = Bot(token=TOKEN)
 app = Flask(__name__)
 
-# SADECE HABER SİTELERİ
 feeds = [
     "https://www.haberturk.com/rss/spor.xml",
     "https://www.fotomac.com.tr/rss/anasayfa.xml"
@@ -21,25 +20,31 @@ news_cache = []
 def fetch_news():
     global news_cache
     news_cache = []
-
-    for url in feeds:
-        feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
-            news_cache.append({
-                "title": entry.title,
-                "link": entry.link
-            })
+    try:
+        for url in feeds:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:5]:
+                news_cache.append({
+                    "title": entry.title,
+                    "link": entry.link
+                })
+    except Exception as e:
+        print("Haber çekme hatası:", e)
 
 def send_news(title, link):
-    msg = f"🔥 *{title}*\n\nDetay 👇\n{link}"
-    bot.send_message(chat_id=CHANNEL, text=msg, parse_mode="Markdown")
+    try:
+        msg = f"🔥 *{title}*\n\nDetay 👇\n{link}"
+        bot.send_message(chat_id=CHANNEL, text=msg, parse_mode="Markdown")
+    except Exception as e:
+        print("Telegram gönderme hatası:", e)
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     if request.method == "POST":
         index = int(request.form["index"])
-        item = news_cache[index]
-        send_news(item["title"], item["link"])
+        if index < len(news_cache):
+            item = news_cache[index]
+            send_news(item["title"], item["link"])
 
     html = """
     <h2>Futbol Haber Paneli</h2>
@@ -53,13 +58,12 @@ def home():
     """
     return render_template_string(html, news=news_cache)
 
-# HER 30 DAKİKADA HABER ÇEK
 scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_news, 'interval', minutes=30)
 scheduler.start()
 
 fetch_news()
 
-# RAILWAY PORT
-PORT = int(os.getenv("PORT", 5000))
-app.run(host="0.0.0.0", port=PORT)
+if __name__ == "__main__":
+    PORT = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=PORT)
